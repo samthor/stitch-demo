@@ -1,0 +1,11 @@
+
+type Client {
+  _id: ID!
+  name: String!
+  tenantCode: String!
+}
+
+type Query {
+  getClient(id: ID!): Client
+}
+

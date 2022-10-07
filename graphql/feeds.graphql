@@ -1,0 +1,16 @@
+
+type Client {
+  _id: ID!
+}
+
+type Credential {
+  _id: ID!
+  clientId: ID
+  client: Client!
+  name: String!
+}
+
+type Query {
+  getCredential(id: ID!): Credential
+  getWhatever: Int
+}
