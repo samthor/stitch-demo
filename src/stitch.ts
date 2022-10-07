@@ -52,6 +52,8 @@ function buildFeedsGraph() {
 
           return out;
         },
+
+        getWhatever: () => Math.floor(1024 * Math.random()),
       },
 
       Credential: {
@@ -140,7 +142,8 @@ async function main() {
   getCredential(id: "valid-credential-id") {
     _id
     client {
-      _id
+      # nb. We _don't_ need to fetch this since the merge config enforces it.
+      # _id
       name
       tenantCode
     }
