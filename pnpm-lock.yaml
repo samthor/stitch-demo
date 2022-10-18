@@ -4,7 +4,10 @@ specifiers:
   '@graphql-tools/schema': ^9.0.4
   '@graphql-tools/stitch': ^8.7.13
   '@graphql-tools/stitching-directives': ^2.3.11
+  '@graphql-tools/utils': ^8.12.0
+  '@graphql-tools/wrap': ^9.2.3
   '@types/node': ^18.8.3
+  chalk: ^5.1.2
   graphql: ^16.6.0
   tsx: ^3.10.1
 
@@ -12,6 +15,9 @@ dependencies:
   '@graphql-tools/schema': 9.0.4_graphql@16.6.0
   '@graphql-tools/stitch': 8.7.13_graphql@16.6.0
   '@graphql-tools/stitching-directives': 2.3.11_graphql@16.6.0
+  '@graphql-tools/utils': 8.12.0_graphql@16.6.0
+  '@graphql-tools/wrap': 9.2.3_graphql@16.6.0
+  chalk: 5.1.2
   graphql: 16.6.0
 
 devDependencies:
@@ -175,6 +181,11 @@ packages:
   /buffer-from/1.1.2:
     resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
     dev: true
+
+  /chalk/5.1.2:
+    resolution: {integrity: sha512-E5CkT4jWURs1Vy5qGJye+XwCkNj7Od3Af7CP6SujMetSMkLs8Do2RWJK5yx1wamHV/op8Rz+9rltjaTQWDnEFQ==}
+    engines: {node: ^12.17.0 || ^14.13 || >=16.0.0}
+    dev: false
 
   /dataloader/2.1.0:
     resolution: {integrity: sha512-qTcEYLen3r7ojZNgVUaRggOI+KM7jrKxXeSHhogh/TWxYMeONEMqY+hmkobiYQozsGIyg9OYVzO4ZIfoB4I0pQ==}

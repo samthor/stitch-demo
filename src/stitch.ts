@@ -1,11 +1,15 @@
 
 import { stitchSchemas } from '@graphql-tools/stitch';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import { printSchema, graphql } from 'graphql';
+import { printSchema, graphql, buildSchema, print, GraphQLSchema } from 'graphql';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
 import { stitchingDirectives } from '@graphql-tools/stitching-directives';
+import { wrapSchema } from '@graphql-tools/wrap';
+import { printSchemaWithDirectives } from '@graphql-tools/utils';
+import chalk from 'chalk';
+
 const { allStitchingDirectivesTypeDefs, stitchingDirectivesTransformer } = stitchingDirectives()
 
 
@@ -21,10 +25,10 @@ function readGraphSource(name: string): string {
 /**
  * Build the feeds graph. Just provides Credential and friends.
  */
-function buildFeedsGraph() {
+function buildFeedSchema() {
   const src = readGraphSource('feeds');
 
-  const schema = makeExecutableSchema({
+  return makeExecutableSchema({
     typeDefs: src,
     resolvers: {
       Query: {
@@ -39,7 +43,7 @@ function buildFeedsGraph() {
           if (id !== 'valid-credential-id') {
             return null;
           }
-          const clientId = 'some-client-id';
+          const clientId = 'hi nub 🍌';
 
           const out = {
             _id: id,
@@ -65,47 +69,68 @@ function buildFeedsGraph() {
       }
     },
   });
-
-  return {
-    schema,
-  };
 }
 
 
 /**
  * Build the model graph. Just provides Client.
  */
-function buildModelGraph() {
+function buildModelSchema() {
   const src = readGraphSource('model');
 
-  const schema = makeExecutableSchema({
+  return makeExecutableSchema({
     typeDefs: src,
     resolvers: {
       Client: {
-        name: () => 'hi',
+        name: () => 'hi',  // this wins over getClient
       },
       Query: {
         getClient: (parent, args, context, info) => {
           console.info('model getClient', { parent, args, context });
           return {
-            _id: args.id || args._id,  // support either in `getClient(<x>: ID)`
+            _id: args.id,
             name: 'A NAME',
-            tenantCode: 'hello tenant',
+            tenantCode: `hello tenant (id=${args.id})`,
           };
         },
       },
     },
   });
+}
 
-  return { schema };
+
+function buildPretendRemoteSchema(remote: GraphQLSchema) {
+  // We serialize this to a string to show what sharing over a network or loading somehow would
+  // look like. In practice the GraphQL files would be shared on disk or sth.
+  // NOTE: We have to use `printSchemaWithDirectives` otherwise @key/@merge get dropped.
+  const src = printSchemaWithDirectives(remote);
+
+  return wrapSchema({
+    schema: buildSchema(src, {}),
+    executor: async (req) => {
+      const query = print(req.document);
+
+      // wait a random amount of time
+      const delay = ~~(Math.random() * 2_000);
+
+      console.debug(`Waiting ${chalk.cyanBright(`${(delay / 1000).toFixed(1)}s`)} to run query on 'remote' graph:`);
+      console.debug(chalk.magentaBright(query));
+      console.debug();
+
+      await new Promise((r) => setTimeout(r, delay));
+
+      const out = await graphql({ schema: remote, source: query, variableValues: req.variables });
+
+      return out as any;
+    },
+  });
 }
 
 
 export function stitchGraphs() {
   const subschemas = [
-    // TODO: how do we make these "remote"?
-    buildFeedsGraph(),
-    buildModelGraph(),
+    buildPretendRemoteSchema(buildFeedSchema()),
+    buildPretendRemoteSchema(buildModelSchema()),
   ];
   const supergraph = stitchSchemas({
     // nb. This is important, it won't merge data without this.
@@ -152,7 +177,8 @@ async function main() {
   if (eout.errors) {
     console.warn('errors', eout.errors);
   }
-  console.info('got result ==>', JSON.stringify(eout.data, undefined, 2));
+  console.info('got result ==>');
+  console.info(chalk.yellowBright(JSON.stringify(eout.data, undefined, 2)));
 }
 
 
