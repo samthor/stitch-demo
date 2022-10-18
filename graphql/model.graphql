@@ -6,6 +6,5 @@ type Client {
 }
 
 type Query {
-  getClient(id: ID!): Client
+  getClient(id: ID!): Client @merge(keyField: "_id")
 }
-

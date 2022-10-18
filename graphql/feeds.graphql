@@ -6,7 +6,7 @@ type Client {
 type Credential {
   _id: ID!
   clientId: ID
-  client: Client!
+  client: Client
   name: String!
 }
 

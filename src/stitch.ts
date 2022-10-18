@@ -5,6 +5,8 @@ import { printSchema, graphql } from 'graphql';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as url from 'url';
+import { stitchingDirectives } from '@graphql-tools/stitching-directives';
+const { allStitchingDirectivesTypeDefs, stitchingDirectivesTransformer } = stitchingDirectives()
 
 
 /**
@@ -12,7 +14,7 @@ import * as url from 'url';
  */
 function readGraphSource(name: string): string {
   const graphqlSourcePath = url.fileURLToPath(new URL('../graphql', import.meta.url));
-  return fs.readFileSync(path.join(graphqlSourcePath, name + '.graphql'), 'utf-8');
+  return allStitchingDirectivesTypeDefs + fs.readFileSync(path.join(graphqlSourcePath, name + '.graphql'), 'utf-8');
 }
 
 
@@ -86,7 +88,7 @@ function buildModelGraph() {
         getClient: (parent, args, context, info) => {
           console.info('model getClient', { parent, args, context });
           return {
-            _id: args.id,
+            _id: args.id || args._id,  // support either in `getClient(<x>: ID)`
             name: 'A NAME',
             tenantCode: 'hello tenant',
           };
@@ -95,22 +97,7 @@ function buildModelGraph() {
     },
   });
 
-  return {
-    schema,
-    merge: {
-      Client: {
-        fieldName: 'getClient',
-
-        // This says: for _other_ graphs, we must have `_id` in order to answer this request.
-        // Otherwise for sub-models the user has to include it, which doesn't make sense.
-        selectionSet: '{ _id }',
-
-        // nb. "other" contains information we have from the other graph(s). Since `selectionSet`
-        // has `_id` above, we know we have it here.
-        args: (other) => ({ id: other._id }),
-      },
-    },
-  };
+  return { schema };
 }
 
 
@@ -121,6 +108,8 @@ export function stitchGraphs() {
     buildModelGraph(),
   ];
   const supergraph = stitchSchemas({
+    // nb. This is important, it won't merge data without this.
+    subschemaConfigTransforms: [stitchingDirectivesTransformer],
     subschemas,
     mergeTypes: true,
     mergeDirectives: true,
@@ -141,6 +130,7 @@ async function main() {
 {
   getCredential(id: "valid-credential-id") {
     _id
+    clientId
     client {
       # nb. We _don't_ need to fetch this since the merge config enforces it.
       # _id
